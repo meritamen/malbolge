@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <ctype.h>
+
 #define MEMORY_SIZE 59049
 #define WIDTH 10
 #define MAGIC 94
+
 #define JMP 4
 #define OUT 5
 #define IN 23
@@ -15,89 +15,40 @@
 #define CRZ 62
 #define NOP 68
 #define HALT 81
-int tbl[MAGIC] = {
-    57, 109, 60,  46,  84,  86,  97,  99,  96,  117,
-    89, 42,  77,  75,  39,  88,  126, 120, 68,  108,
-    125, 82,  69,  111, 107, 78,  58,  35,  63,  71,
-    34,  105, 64,  53,  122, 93,  38,  103, 113, 116,
-    121, 102, 114, 36,  40,  119, 101, 52,  123, 87,
-    80,  41,  72,  45,  90,  110, 44,  91,  37,  92,
-    51,  100, 76,  43,  81,  59,  62,  85,  33,  112,
-    74,  83,  55,  50,  70,  104, 79,  65,  49,  67,
-    66,  54,  118, 94,  61,  73,  95,  48,  47,  56,
-    124, 106, 115, 98
-};
-int trit[3][3] = {
+
+const unsigned char xlat[] = "5z]&gqtyfr$(we4{WP)H-Zn,[%\\3dL+Q;>U!pJS72FhOA1CB6v^=I_0/8|jsb9m<.TVac`uY*MK'X~xDl}REokN:#?G\"i@";
+
+int trit[3][3] =
+{
   { 1, 0, 0 },
   { 1, 0, 2 },
   { 2, 2, 1 }
 };
-uint16_t mem[MEMORY_SIZE];
-uint16_t a = 0, c = 0, d = 0;
-char* d2t(uint16_t n);
-uint16_t t2d(char* str);
-char* rotate(char* str);
+
 uint16_t crz(uint16_t lhs, uint16_t rhs);
-int load(FILE* f);
-void exec();
+
 int main(int argc, char** argv)
 {
+  uint16_t *mem = (uint16_t*)malloc(sizeof(uint16_t) * MEMORY_SIZE);
+  uint16_t a = 0, c = 0, d = 0;
+
   FILE *f;
   if (argc != 2) {
-    fprintf(stderr, "Where is the fucking file?\n");
+    fprintf(stderr, "usage: %s <FILE>\n", argv[0]);
     return 1;
   }
+
   if (!(f = fopen(argv[1], "r"))) {
-    fprintf(stderr, "What the fuck is this file?\n");
-    return 2;
+    fprintf(stderr, "%s: No suck file or directory\n", argv[1]);
+    return 1;
   }
-  load(f);
-  exec();
-  fclose(f);
-  return 0;
-}
-char* d2t(uint16_t n)
-{
-  char *str = (char*)malloc((WIDTH + 1) * sizeof(char));
-  for(int i = WIDTH - 1; i >= 0; i--) {
-    str[i] = '0' + n % 3;
-    n /= 3;
-  }
-  str[WIDTH] = '\0';
-  return str;
-}
-uint16_t t2d(char *str)
-{
-  uint16_t result = 0;
-  for (int i = strlen(str) - 1, j = 0; i >= 0; --i, ++j)
-    result += (str[j] - '0') * pow(3, i);
-  return result;
-}
-char* rotate(char *str)
-{
-  char temp = str[strlen(str) - 1];
-  for (int i = strlen(str) - 1; i > 0; --i)
-    str[i] = str[i - 1];
-  str[0] = temp;
-  return str;
-}
-uint16_t crz(uint16_t lhs, uint16_t rhs)
-{
-  char str[11] = "0000000000";
-  char* lhs_s = d2t(lhs);
-  char* rhs_s = d2t(rhs);
-  for (int i = 0; i < WIDTH; ++i)
-    str[i] = '0' + trit[lhs_s[i] - '0'][rhs_s[i] - '0'];
-  return t2d(str);
-}
-int load(FILE* f)
-{
+
   uint16_t i;
-  char c;
+  char ch;
   for (i = 0; i < MEMORY_SIZE;) {
-    if (fread(&c, sizeof(char), 1, f) <= 0) break;
-    if (isspace(c)) continue;
-    switch ((c + i) % MAGIC) {
+    if (fread(&ch, sizeof(char), 1, f) <= 0) break;
+    if (ch < 33 || ch > 126) continue;
+    switch ((ch + i) % MAGIC) {
       case JMP:
       case OUT:
       case IN:
@@ -106,22 +57,19 @@ int load(FILE* f)
       case CRZ:
       case NOP:
       case HALT:
-        mem[i++] = c;
+        mem[i++] = ch;
         continue;
       default:
-        fprintf(stderr, "Invaild input characters\n");
-        exit(1);
+        fprintf(stderr, "Invaild input program: %d - %d - %c\n", i, ch, ch);
+        return 1;
     }
   }
+
   if (i == 0) mem[0] = 1;
   if (i == 1) mem[1] = crz(0, mem[1]);
   for (i = (i < 2) ? 2 : i; i < MEMORY_SIZE; ++i)
     mem[i] = crz(mem[i - 2], mem[i - 1]);
-}
 
-void exec()
-{
-  int ch;
   for (;;) {
     switch ((mem[c] + c) % MAGIC) {
       case JMP:
@@ -131,10 +79,10 @@ void exec()
         putc(a, stdout);
         break;
       case IN:
-        ch = getc(stdin); a = (ch == EOF) ? MEMORY_SIZE - 1 : ch;
+        a = getc(stdin);
         break;
       case ROTR:
-        a = mem[d] = t2d(rotate(d2t(mem[d])));
+        a = mem[d] = mem[d] / 3 + (mem[d] % 3) * (MEMORY_SIZE / 3);
         break;
       case MOV:
         d = mem[d];
@@ -145,10 +93,27 @@ void exec()
       case NOP:
         break;
       case HALT:
-        return;
+        return 1;
     }
-    mem[c] = tbl[mem[c] % MAGIC];
+    mem[c] = xlat[mem[c] - 33];
     c = (c + 1) % MEMORY_SIZE;
     d = (d + 1) % MEMORY_SIZE;
   }
+
+  fclose(f);
+  free(mem);
+
+  return 0;
+}
+
+uint16_t crz(uint16_t lhs, uint16_t rhs)
+{
+  uint16_t r = 0, i;
+
+  for (i = 1; i < MEMORY_SIZE; i *= 3) {
+    r += trit[lhs % 3][rhs % 3] * i;
+    lhs /= 3; rhs /= 3;
+  }
+
+  return r;
 }
