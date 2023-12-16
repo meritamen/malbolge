@@ -1,0 +1,23 @@
+Malbolge interpreter in C
+
+Meritamen pulled a afternoon on this thing, but sorry, her math skills
+are trash. Meritamen reckon it's time for she to dive into some abstract
+algebra on her own. But truth be told, if Meritamen don't keep scrolling
+through some short vids or media and passively soak up that garbage info,
+Meritamen might as well be dead. At least there are a few things in this
+world that can get her full attention, especially these days. When
+Meritamen'm so bored Meritamen feel like ending it, all Meritamen can
+do is hack together some junk code.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
